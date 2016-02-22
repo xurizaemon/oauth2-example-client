@@ -118,11 +118,11 @@ exports.OAuth2.prototype._executeRequest= function( http_library, options, post_
   if(options.method == 'POST' && post_body) {
      request.write(post_body);
   }
-  request.end();  
+  request.end();
 }
 
 exports.OAuth2.prototype.getAuthorizeUrl= function(response_type) {
-  
+
   response_type = response_type || 'code';
 
   return this._baseSite + this._authorizeUrl + '?response_type=' + response_type + '&client_id=' + this._clientId +  '&state=xyz&redirect_uri=' + this._callbackURL;
@@ -130,7 +130,6 @@ exports.OAuth2.prototype.getAuthorizeUrl= function(response_type) {
 }
 
 exports.OAuth2.prototype.getOAuthAccessToken= function(code, callback) {
-
   var post_data = 'grant_type=authorization_code&code=' + code + '&redirect_uri=' + this._callbackURL;
 
   var post_headers= {
