@@ -2,6 +2,8 @@ var express = require('express');
 var OAuth2 = require('./oauth2').OAuth2;
 var config = require('./config');
 
+var tplLogout = "<button onclick='window.location.href=\"/logout\"'>Log out</button>";
+
 // Express configuration
 var app = express();
 app.use(express.logger());
@@ -44,27 +46,51 @@ app.get('/', function(req, res){
 
 // Handles returning requests with the access code.
 app.get('/login', function(req, res){
+  if (typeof req.query.error !== 'undefined') {
+    res.send('Error: ' + req.query.error + ': ' + req.query.error_description + '<br><a href="/">try again</a>');
+  }
   // Using the access code goes again to the IDM to obtain the access_token
   oa.getOAuthAccessToken(req.query.code, function (e, results) {
-    // Stores the access_token in a session cookie
-    req.session.access_token = results.access_token;
-    res.redirect('/');
+    if (typeof results !== 'undefined') {
+      // Stores the access_token in a session cookie
+      req.session.access_token = results.access_token;
+      res.redirect('/');
+    }
   });
 });
 
-// Redirection to IDM authentication portal
+// Redirection to authentication portal
 app.get('/auth', function(req, res){
+  console.log('x');
   var path = oa.getAuthorizeUrl(response_type);
   res.redirect(path);
 });
 
-// Ask IDM for user info
+// Ask for user info
 app.get('/user_info', function(req, res){
-  var url = config.idmURL + '/user/';
+  var url = config.idmURL + '/oauth2/UserInfo';
   // Using the access token asks the IDM for the user info
   oa.get(url, req.session.access_token, function (e, response) {
-    var user = JSON.parse(response);
-    res.send("Welcome " + user.displayName + "<br> Your email address is " + user.email + "<br><br><button onclick='window.location.href=\"/logout\"'>Log out</button>");
+    if (e) {
+      error = JSON.parse(e.data);
+      res.send('Error: ' + error.error_description + tplLogout);
+    }
+    else {
+      var user = JSON.parse(response);
+      var url2 = config.idmURL + '/api/user/' + user.sub + '.json';
+      console.log(url2 + '?access_token=' + req.session.access_token);
+      oa.get(url2, req.session.access_token, function(e, response) {
+        console.log(e, 'e');
+        console.log(response, 'r');
+        if (e) {
+          error = JSON.parse(e.data);
+          res.send('Error: ' + error.error_description + tplLogout);
+        }
+        else {
+          res.send("Welcome user " + user.sub + "<br><br>" + tplLogout);
+        }
+      });
+    }
   });
 });
 
