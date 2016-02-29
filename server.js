@@ -78,16 +78,16 @@ app.get('/user_info', function(req, res){
     else {
       var user = JSON.parse(response);
       var url2 = config.idmURL + '/api/user/' + user.sub + '.json';
-      console.log(url2 + '?access_token=' + req.session.access_token);
+      // console.log(url2 + '?access_token=' + req.session.access_token);
       oa.get(url2, req.session.access_token, function(e, response) {
-        console.log(e, 'e');
-        console.log(response, 'r');
         if (e) {
           error = JSON.parse(e.data);
           res.send('Error: ' + error.error_description + tplLogout);
         }
         else {
-          res.send("Welcome user " + user.sub + "<br><br>" + tplLogout);
+          console.log(typeof response);
+          data = JSON.parse(response);
+          res.send("Welcome user " + user.sub + ", your email is " + data.mail + ".<br><br>" + tplLogout);
         }
       });
     }

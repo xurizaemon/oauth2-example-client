@@ -1,7 +1,7 @@
 var querystring = require('querystring'),
     https = require('https'),
     http = require('http'),
-    url = require('url');
+    URL = require('url');
 
 exports.OAuth2 = function(clientId, clientSecret, baseSite, authorizePath, accessTokenPath, callbackURL, customHeaders) {
   this._clientId= clientId;
@@ -37,8 +37,8 @@ exports.OAuth2.prototype.buildAuthHeader = function() {
 };
 
 exports.OAuth2.prototype._request = function(method, url, headers, post_body, access_token, callback) {
-  var http_library= https;
-  var parsedUrl= url.parse( url, true );
+  var http_library = https;
+  var parsedUrl= URL.parse(url, true);
   if (parsedUrl.protocol === "https:" && !parsedUrl.port) {
     parsedUrl.port= 443;
   }
