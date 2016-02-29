@@ -1,9 +1,9 @@
-var querystring= require('querystring'),
-    https= require('https'),
-    http= require('http'),
-    URL= require('url');
+var querystring = require('querystring'),
+    https = require('https'),
+    http = require('http'),
+    url = require('url');
 
-exports.OAuth2= function(clientId, clientSecret, baseSite, authorizePath, accessTokenPath, callbackURL, customHeaders) {
+exports.OAuth2 = function(clientId, clientSecret, baseSite, authorizePath, accessTokenPath, callbackURL, customHeaders) {
   this._clientId= clientId;
   this._clientSecret= clientSecret;
   this._baseSite= baseSite;
@@ -13,48 +13,47 @@ exports.OAuth2= function(clientId, clientSecret, baseSite, authorizePath, access
   this._accessTokenName= "access_token";
   this._authMethod= "Basic";
   this._customHeaders = customHeaders || {};
-}
+};
 
 // This 'hack' method is required for sites that don't use
 // 'access_token' as the name of the access token (for requests).
 // ( http://tools.ietf.org/html/draft-ietf-oauth-v2-16#section-7 )
 // it isn't clear what the correct value should be atm, so allowing
 // for specific (temporary?) override for now.
-exports.OAuth2.prototype.setAccessTokenName= function ( name ) {
+exports.OAuth2.prototype.setAccessTokenName = function ( name ) {
   this._accessTokenName= name;
-}
+};
 
-exports.OAuth2.prototype._getAccessTokenUrl= function() {
+exports.OAuth2.prototype._getAccessTokenUrl = function() {
   return this._baseSite + this._accessTokenUrl;
-}
+};
 
 // Build the authorization header. In particular, build the part after the colon.
 // e.g. Authorization: Bearer <token>  # Build "Bearer <token>"
-exports.OAuth2.prototype.buildAuthHeader= function() {
+exports.OAuth2.prototype.buildAuthHeader = function() {
   var key = this._clientId + ':' + this._clientSecret;
   var base64 = (new Buffer(key)).toString('base64');
   return this._authMethod + ' ' + base64;
 };
 
-exports.OAuth2.prototype._request= function(method, url, headers, post_body, access_token, callback) {
-
+exports.OAuth2.prototype._request = function(method, url, headers, post_body, access_token, callback) {
   var http_library= https;
-  var parsedUrl= URL.parse( url, true );
-  if( parsedUrl.protocol == "https:" && !parsedUrl.port ) {
+  var parsedUrl= url.parse( url, true );
+  if (parsedUrl.protocol === "https:" && !parsedUrl.port) {
     parsedUrl.port= 443;
   }
 
   // As this is OAUth2, we *assume* https unless told explicitly otherwise.
-  if( parsedUrl.protocol != "https:" ) {
+  if (parsedUrl.protocol !== "https:") {
     http_library= http;
   }
 
   var realHeaders= {};
-  for( var key in this._customHeaders ) {
+  for (var key in this._customHeaders) {
     realHeaders[key]= this._customHeaders[key];
   }
-  if( headers ) {
-    for(var key in headers) {
+  if (headers) {
+    for (var key in headers) {
       realHeaders[key] = headers[key];
     }
   }
@@ -62,12 +61,16 @@ exports.OAuth2.prototype._request= function(method, url, headers, post_body, acc
 
   //realHeaders['Content-Length']= post_body ? Buffer.byteLength(post_body) : 0;
   if( access_token && !('Authorization' in realHeaders)) {
-    if( ! parsedUrl.query ) parsedUrl.query= {};
+    if (!parsedUrl.query) {
+      parsedUrl.query= {};
+    }
     parsedUrl.query[this._accessTokenName]= access_token;
   }
 
   var queryStr= querystring.stringify(parsedUrl.query);
-  if( queryStr ) queryStr=  "?" + queryStr;
+  if (queryStr) {
+    queryStr=  "?" + queryStr;
+  }
   var options = {
     host:parsedUrl.hostname,
     port: parsedUrl.port,
@@ -77,7 +80,7 @@ exports.OAuth2.prototype._request= function(method, url, headers, post_body, acc
   };
 
   this._executeRequest( http_library, options, post_body, callback );
-}
+};
 
 exports.OAuth2.prototype._executeRequest= function( http_library, options, post_body, callback ) {
   // Some hosts *cough* google appear to close the connection early / send no content-length header
@@ -87,9 +90,10 @@ exports.OAuth2.prototype._executeRequest= function( http_library, options, post_
   function passBackControl( response, result ) {
     if(!callbackCalled) {
       callbackCalled=true;
-      if( response.statusCode != 200 && (response.statusCode != 301) && (response.statusCode != 302) ) {
+      if (response.statusCode !== 200 && (response.statusCode !== 301) && (response.statusCode !== 302)) {
         callback({ statusCode: response.statusCode, data: result });
-      } else {
+      }
+      else {
         callback(null, result, response);
       }
     }
@@ -99,7 +103,7 @@ exports.OAuth2.prototype._executeRequest= function( http_library, options, post_
 
   var request = http_library.request(options, function (response) {
     response.on("data", function (chunk) {
-      result+= chunk
+      result += chunk;
     });
     response.on("close", function (err) {
       if( allowEarlyClose ) {
@@ -115,19 +119,16 @@ exports.OAuth2.prototype._executeRequest= function( http_library, options, post_
     callback(e);
   });
 
-  if(options.method == 'POST' && post_body) {
+  if (options.method === 'POST' && post_body) {
      request.write(post_body);
   }
   request.end();
-}
+};
 
 exports.OAuth2.prototype.getAuthorizeUrl= function(response_type) {
-
   response_type = response_type || 'code';
-
   return this._baseSite + this._authorizeUrl + '?response_type=' + response_type + '&client_id=' + this._clientId +  '&state=xyz&redirect_uri=' + this._callbackURL;
-
-}
+};
 
 exports.OAuth2.prototype.getOAuthAccessToken= function(code, callback) {
   var post_data = 'grant_type=authorization_code&code=' + code + '&redirect_uri=' + this._callbackURL;
@@ -139,7 +140,9 @@ exports.OAuth2.prototype.getOAuthAccessToken= function(code, callback) {
    };
 
   this._request("POST", this._getAccessTokenUrl(), post_headers, post_data, null, function(error, data, response) {
-    if( error )  callback(error);
+    if (error) {
+      callback(error);
+    }
     else {
       var results;
       try {
@@ -157,8 +160,8 @@ exports.OAuth2.prototype.getOAuthAccessToken= function(code, callback) {
       callback(null, results);
     }
   });
-}
+};
 
 exports.OAuth2.prototype.get= function(url, access_token, callback) {
   this._request("GET", url, {}, "", access_token, callback);
-}
+};
