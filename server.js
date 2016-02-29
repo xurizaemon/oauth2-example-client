@@ -2,6 +2,8 @@ var express = require('express');
 var OAuth2 = require('./oauth2').OAuth2;
 var config = require('./config');
 
+var tplLogout = "<button onclick='window.location.href=\"/logout\"'>Log out</button>";
+
 // Express configuration
 var app = express();
 app.use(express.logger());
@@ -71,12 +73,23 @@ app.get('/user_info', function(req, res){
   oa.get(url, req.session.access_token, function (e, response) {
     if (e) {
       error = JSON.parse(e.data);
-      res.send('Error: ' + error.error_description);
+      res.send('Error: ' + error.error_description + tplLogout);
     }
     else {
       var user = JSON.parse(response);
-      console.log(user);
-      res.send("Welcome " + user.displayName + "<br> Your email address is " + user.email + "<br><br><button onclick='window.location.href=\"/logout\"'>Log out</button>");
+      var url2 = config.idmURL + '/api/user/' + user.sub + '.json';
+      console.log(url2 + '?access_token=' + req.session.access_token);
+      oa.get(url2, req.session.access_token, function(e, response) {
+        console.log(e, 'e');
+        console.log(response, 'r');
+        if (e) {
+          error = JSON.parse(e.data);
+          res.send('Error: ' + error.error_description + tplLogout);
+        }
+        else {
+          res.send("Welcome user " + user.sub + "<br><br>" + tplLogout);
+        }
+      });
     }
   });
 });
