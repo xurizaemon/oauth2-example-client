@@ -1,24 +1,21 @@
-oauth2-example-client
-===================
+# OAuth2 Example Client
 
-Oauth2 authentication example for FI-WARE GE applications
+Oauth2 authentication example, based on @ging's [OAuth2 Example Client](https://github.com/ging/oauth2-example-client)
 
-- Software requirements:
+This version is being used to authenticate and retrieve user data from a Drupal site.
 
-	+ nodejs 
-	+ npm
+## Usage
 
-- Install the dependencies: 
+Install `nodejs` and `npm`.
 
-	npm install
+Change to the project directory and run
 
-- Configure OAuth2 credentials in config.js file (you will find theme in your IDM account)
+    npm install
 
-- Start example server
+Configure OAuth2 credentials in config.js file. These must match your OAuth2 server configuration.
 
-	sudo node server
+Start example server
 
-- Connect to http://localhost to try the example 
+    node server
 
-* Connect to http://localhost/logout to delete session cookies once you have logout in IDM portal
-
+Connect to the URL displayed in console.
